@@ -53,6 +53,9 @@ public class MouseRaceApp extends Application {
 
         // Initialize the leaderboard with SQLiteDatabase implementation
         leaderboard = new Leaderboard(new SQLiteDatabase());
+
+        // Clear the leaderboard at startup
+        //clearLeaderboard();
     }
 
     private void startGame() {
@@ -206,8 +209,13 @@ public class MouseRaceApp extends Application {
         StackPane.setAlignment(leaderboardBox, Pos.CENTER);
     }
 
+    private void clearLeaderboard() {
+        leaderboard.clearLeaderboard();
+        System.out.println("Leaderboard cleared.");
+    }
+
     public static void main(String[] args) {
-        // Create leaderboard table if not exists
+        // Initialize database and leaderboard table
         new SQLiteDatabase().initializeDatabase();
         launch(args);
     }

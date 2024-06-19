@@ -3,7 +3,7 @@ package com.example.mouseracegame;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
+import javafx.scene.shape.Polygon;
 import javafx.util.Duration;
 
 public class ChangeElement extends GameElement {
@@ -12,7 +12,16 @@ public class ChangeElement extends GameElement {
     private Timeline changeStateTimeline;
 
     public ChangeElement() {
-        this.shape = new Rectangle(30, 30, Color.GREEN);
+        // Create a triangle shape
+        Polygon triangle = new Polygon();
+        triangle.getPoints().addAll(
+                0.0, 0.0,  // Vertex 1
+                30.0, 0.0, // Vertex 2
+                15.0, 30.0 // Vertex 3
+        );
+        triangle.setFill(Color.GREEN);
+
+        this.shape = triangle;
         this.isCollectible = true;
         this.isCollectState = true;
 

@@ -18,8 +18,12 @@ public class SQLiteDatabase implements Database {
         try (Connection connection = getConnection();
              Statement statement = connection.createStatement()) {
 
-            String createTableSQL = "CREATE TABLE IF NOT EXISTS leaderboard (id INTEGER PRIMARY KEY, name TEXT, time INTEGER)";
+            String createTableSQL = "CREATE TABLE IF NOT EXISTS leaderboard (" +
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                    "name TEXT NOT NULL, " +
+                    "time INTEGER NOT NULL)";
             statement.executeUpdate(createTableSQL);
+            System.out.println("Leaderboard table created or already exists.");
 
         } catch (SQLException e) {
             e.printStackTrace();
