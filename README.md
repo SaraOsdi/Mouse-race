@@ -1,5 +1,5 @@
 Mouse-race game 
-Using JavaFX and SQLite for DB
+Using JavaFX and SQLite with an emphasis on Object Oriented architecture.
 
 Instructions:
 Download the folder, extract, open in your favorite IDE and run.
