@@ -1,4 +1,4 @@
-package com.example.mouseracegame;
+package com.example.element;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -9,7 +9,8 @@ import javafx.util.Duration;
 public class ChangeElement extends GameElement {
 
     private boolean isCollectState;
-    private Timeline changeStateTimeline;
+    private final Timeline changeStateTimeline;
+    private final Timeline rotationTimeline;
 
     public ChangeElement() {
         // Create a triangle shape
@@ -31,7 +32,7 @@ public class ChangeElement extends GameElement {
         changeStateTimeline.play();
 
         // Initialize the rotation timeline
-        Timeline rotationTimeline = new Timeline(new KeyFrame(Duration.millis(50), e -> rotate()));
+        rotationTimeline = new Timeline(new KeyFrame(Duration.millis(50), e -> rotate()));
         rotationTimeline.setCycleCount(Timeline.INDEFINITE);
         rotationTimeline.play();
     }
@@ -51,9 +52,10 @@ public class ChangeElement extends GameElement {
         shape.setRotate(shape.getRotate() + 5);
     }
 
+
     @Override
-    public void onClicked() {
-        // Implement change logic
-        System.out.println("ChangeElement clicked!");
+    public void stopMovement() {
+        changeStateTimeline.stop();
+        rotationTimeline.stop();
     }
 }

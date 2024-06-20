@@ -1,4 +1,4 @@
-package com.example.mouseracegame;
+package com.example.element;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -9,7 +9,8 @@ import javafx.util.Duration;
 public class CollectElement extends GameElement {
 
     private boolean movingUp;
-    private Timeline movementTimeline;
+    private final Timeline movementTimeline;
+    private final Timeline positionUpdater;
 
     public CollectElement() {
         this.shape = new Rectangle(30, 30, Color.GREEN);
@@ -22,7 +23,7 @@ public class CollectElement extends GameElement {
         movementTimeline.play();
 
         // Update position every frame
-        Timeline positionUpdater = new Timeline(new KeyFrame(Duration.millis(100), e -> updatePosition()));
+        positionUpdater = new Timeline(new KeyFrame(Duration.millis(100), e -> updatePosition()));
         positionUpdater.setCycleCount(Timeline.INDEFINITE);
         positionUpdater.play();
     }
@@ -47,9 +48,10 @@ public class CollectElement extends GameElement {
         shape.setTranslateY(newY);
     }
 
+
     @Override
-    public void onClicked() {
-        // Implement collect logic
-        System.out.println("CollectElement clicked!");
+    public void stopMovement() {
+        movementTimeline.stop();
+        positionUpdater.stop();
     }
 }

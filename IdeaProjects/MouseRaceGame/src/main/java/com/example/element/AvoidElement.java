@@ -1,4 +1,4 @@
-package com.example.mouseracegame;
+package com.example.element;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -9,7 +9,8 @@ import javafx.util.Duration;
 public class AvoidElement extends GameElement {
 
     private boolean movingRight;
-    private Timeline movementTimeline;
+    private final Timeline movementTimeline;
+    private final Timeline positionUpdater;
 
     public AvoidElement() {
         this.shape = new Circle(15, Color.RED);
@@ -22,7 +23,7 @@ public class AvoidElement extends GameElement {
         movementTimeline.play();
 
         // Update position every frame
-        Timeline positionUpdater = new Timeline(new KeyFrame(Duration.millis(100), e -> updatePosition()));
+        positionUpdater = new Timeline(new KeyFrame(Duration.millis(100), e -> updatePosition()));
         positionUpdater.setCycleCount(Timeline.INDEFINITE);
         positionUpdater.play();
     }
@@ -47,9 +48,10 @@ public class AvoidElement extends GameElement {
         shape.setTranslateX(newX);
     }
 
+
     @Override
-    public void onClicked() {
-        // Implement avoid logic
-        System.out.println("AvoidElement clicked!");
+    public void stopMovement() {
+        movementTimeline.stop();
+        positionUpdater.stop();
     }
 }

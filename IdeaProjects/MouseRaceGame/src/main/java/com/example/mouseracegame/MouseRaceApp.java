@@ -1,5 +1,9 @@
 package com.example.mouseracegame;
 
+import com.example.element.AvoidElement;
+import com.example.element.ChangeElement;
+import com.example.element.CollectElement;
+import com.example.element.GameElement;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
@@ -18,6 +22,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import static com.example.mouseracegame.GameSettings.*;
+
 public class MouseRaceApp extends Application {
 
     private Pane gamePane;
@@ -33,33 +39,43 @@ public class MouseRaceApp extends Application {
     public void start(Stage primaryStage) {
         primaryStage.setTitle("Mouse Race Game");
 
-        gamePane = new Pane();
-        gamePane.setPrefSize(800, 600);
+        initializeGamePane();
+        initializeStartButton();
+        initializeTimerLabel();
 
-        startButton = new Button("Start");
-        startButton.setOnAction(e -> startGame());
-
-        timerLabel = new Label("Time: 0");
-        timerLabel.setStyle("-fx-font-size: 24;");
-
-        StackPane root = new StackPane();
-        root.getChildren().addAll(gamePane, startButton, timerLabel);
-        StackPane.setAlignment(startButton, Pos.CENTER); // Center the start button
-        StackPane.setAlignment(timerLabel, Pos.TOP_CENTER); // Position the timer at the top center
-
-        Scene scene = new Scene(root, 800, 600);
+        StackPane root = createRootLayout();
+        Scene scene = new Scene(root, GAME_PANE_WIDTH, GAME_PANE_HEIGHT);
         primaryStage.setScene(scene);
         primaryStage.show();
 
-        // Initialize the leaderboard with SQLiteDatabase implementation
-        leaderboard = new Leaderboard(new SQLiteDatabase());
+        leaderboard = new Leaderboard(new LeaderboardSQLiteDatabase());
+    }
 
-        // Clear the leaderboard at startup
-        //clearLeaderboard();
+    private void initializeGamePane() {
+        gamePane = new Pane();
+        gamePane.setPrefSize(800, 600);
+    }
+
+    private void initializeStartButton() {
+        startButton = new Button("Start");
+        startButton.setOnAction(e -> startGame());
+    }
+
+    private void initializeTimerLabel() {
+        timerLabel = new Label("Time: 0");
+        timerLabel.setStyle(String.format("-fx-font-size: %d;", TIMER_LABEL_FONT_SIZE));
+    }
+
+    private StackPane createRootLayout() {
+        StackPane root = new StackPane();
+        root.getChildren().addAll(gamePane, startButton, timerLabel);
+        StackPane.setAlignment(startButton, Pos.CENTER);
+        StackPane.setAlignment(timerLabel, Pos.TOP_CENTER);
+        return root;
     }
 
     private void startGame() {
-        startButton.setVisible(false); // Hide the start button
+        startButton.setVisible(false);
         gamePane.getChildren().clear();
         elements = new ArrayList<>();
         Random random = new Random();
@@ -67,56 +83,31 @@ public class MouseRaceApp extends Application {
         elapsedTime = 0;
         timerLabel.setText("Time: 0");
 
-        // Create and position Collect elements
-        for (int i = 0; i < 5; i++) {
-            CollectElement collectElement = new CollectElement();
-            positionElement(collectElement.getShape(), random);
-            elements.add(collectElement);
-            gamePane.getChildren().add(collectElement.getShape());
+        createAndPositionGameElements(random);
+
+        addMouseClickHandlers();
+
+        setupGameLoop();
+        setupTimer();
+    }
+
+    private void createAndPositionGameElements(Random random) {
+        createElements(CollectElement.class, ELEMENT_COUNT, random);
+        createElements(AvoidElement.class, ELEMENT_COUNT, random);
+        createElements(ChangeElement.class, CHANGE_ELEMENT_COUNT, random);
+    }
+
+    private void createElements(Class<? extends GameElement> elementType, int count, Random random) {
+        try {
+            for (int i = 0; i < count; i++) {
+                GameElement element = elementType.getDeclaredConstructor().newInstance();
+                positionElement(element.getShape(), random);
+                elements.add(element);
+                gamePane.getChildren().add(element.getShape());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-
-        // Create and position Avoid elements
-        for (int i = 0; i < 5; i++) {
-            AvoidElement avoidElement = new AvoidElement();
-            positionElement(avoidElement.getShape(), random);
-            elements.add(avoidElement);
-            gamePane.getChildren().add(avoidElement.getShape());
-        }
-
-        // Create and position Change elements
-        for (int i = 0; i < 3; i++) {
-            ChangeElement changeElement = new ChangeElement();
-            positionElement(changeElement.getShape(), random);
-            elements.add(changeElement);
-            gamePane.getChildren().add(changeElement.getShape());
-        }
-
-        // Add mouse click handlers
-        for (GameElement element : elements) {
-            element.getShape().setOnMouseClicked(e -> {
-                element.onClicked();
-                if (element.isCollectible()) {
-                    gamePane.getChildren().remove(element.getShape());
-                    elements.remove(element);
-                    checkVictoryCondition();
-                } else {
-                    gameOver();
-                }
-            });
-        }
-
-        // Set up game loop for element movements
-        gameLoop = new Timeline(new KeyFrame(Duration.millis(100), e -> updateElements()));
-        gameLoop.setCycleCount(Timeline.INDEFINITE);
-        gameLoop.play();
-
-        // Set up timer for elapsed time
-        timer = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
-            elapsedTime++;
-            timerLabel.setText("Time: " + elapsedTime);
-        }));
-        timer.setCycleCount(Timeline.INDEFINITE);
-        timer.play();
     }
 
     private void positionElement(javafx.scene.shape.Shape shape, Random random) {
@@ -126,35 +117,75 @@ public class MouseRaceApp extends Application {
         shape.setTranslateY(y);
     }
 
-    private void updateElements() {
-        for (GameElement element : elements) {
-            element.update();
+    private void addMouseClickHandlers() {
+        elements.forEach(element -> element.getShape().setOnMouseClicked(e -> handleElementClick(element)));
+    }
+
+    private void handleElementClick(GameElement element) {
+        if (element.isCollectible()) {
+            gamePane.getChildren().remove(element.getShape());
+            elements.remove(element);
+            checkVictoryCondition();
+        } else {
+            gameOver();
         }
+    }
+
+    private void setupGameLoop() {
+        gameLoop = new Timeline(new KeyFrame(Duration.millis(GAME_LOOP_INTERVAL)));
+        gameLoop.setCycleCount(Timeline.INDEFINITE);
+        gameLoop.play();
+    }
+
+
+    private void setupTimer() {
+        timer = new Timeline(new KeyFrame(Duration.seconds(TIMER_INTERVAL), e -> updateTimer()));
+        timer.setCycleCount(Timeline.INDEFINITE);
+        timer.play();
+    }
+
+
+    private void updateTimer() {
+        elapsedTime++;
+        timerLabel.setText("Time: " + elapsedTime);
     }
 
     private void checkVictoryCondition() {
         if (elements.stream().noneMatch(GameElement::isCollectible)) {
-            gameLoop.stop();
-            timer.stop();
+            stopGame();
             showVictoryScreen();
         }
     }
 
     private void gameOver() {
+        stopGame();
+        showGameOverScreen();
+        startButton.setVisible(true);
+    }
+
+    private void stopGame() {
         gameLoop.stop();
         timer.stop();
-        showGameOverScreen();
-        startButton.setVisible(true); // Show the start button again
-        disableElementInteractions(); // Disable interactions after game over
+        disableElementInteractions();
+        stopElementMovements();
     }
 
     private void disableElementInteractions() {
-        for (GameElement element : elements) {
-            element.getShape().setOnMouseClicked(null);
-        }
+        elements.forEach(element -> element.getShape().setOnMouseClicked(null));
+    }
+
+
+    private void stopElementMovements() {
+        elements.forEach(GameElement::stopMovement);
     }
 
     private void showVictoryScreen() {
+        VBox victoryBox = createVictoryBox();
+        gamePane.getChildren().add(victoryBox);
+        StackPane.setAlignment(victoryBox, Pos.CENTER);
+    }
+
+    private VBox createVictoryBox() {
         Label victoryLabel = new Label("Victory! Enter your name:");
         TextField nameField = new TextField();
         Button submitButton = new Button("Submit");
@@ -162,61 +193,62 @@ public class MouseRaceApp extends Application {
         VBox victoryBox = new VBox(10, victoryLabel, nameField, submitButton);
         victoryBox.setAlignment(Pos.CENTER);
 
-        gamePane.getChildren().add(victoryBox);
-        StackPane.setAlignment(victoryBox, Pos.CENTER);
-
-        submitButton.setOnAction(e -> {
-            String playerName = nameField.getText();
-            if (!playerName.isEmpty()) {
-                leaderboard.savePlayerTime(playerName, elapsedTime);
-                gamePane.getChildren().remove(victoryBox);
-                showLeaderboard();
-                startButton.setVisible(true); // Show the start button again
-            }
-        });
+        submitButton.setOnAction(e -> handleVictorySubmit(nameField, victoryBox));
+        return victoryBox;
+    }
+    private void handleVictorySubmit(TextField nameField, VBox victoryBox) {
+        String playerName = nameField.getText();
+        if (!playerName.isEmpty()) {
+            leaderboard.savePlayerTime(playerName, elapsedTime);
+            gamePane.getChildren().remove(victoryBox);
+            showLeaderboard();
+            startButton.setVisible(true);
+        }
     }
 
     private void showGameOverScreen() {
-        Label gameOverLabel = new Label("Game Over!");
-        Button restartButton = new Button("Restart");
-
-        VBox gameOverBox = new VBox(10, gameOverLabel, restartButton);
-        gameOverBox.setAlignment(Pos.CENTER);
-
+        VBox gameOverBox = createGameOverBox();
         gamePane.getChildren().add(gameOverBox);
         StackPane.setAlignment(gameOverBox, Pos.CENTER);
+    }
 
-        restartButton.setOnAction(e -> {
-            gamePane.getChildren().remove(gameOverBox);
-            startButton.setVisible(true); // Show the start button again
-        });
+    private VBox createGameOverBox() {
+        Label gameOverLabel = new Label("Game Over!");
+        gameOverLabel.setStyle(String.format("-fx-font-size: %d; -fx-font-weight: bold;", GAME_OVER_LABEL_FONT_SIZE));
+
+        VBox gameOverBox = new VBox(10, gameOverLabel, createLeaderboardBox());
+        gameOverBox.setAlignment(Pos.CENTER);
+
+        return gameOverBox;
     }
 
     private void showLeaderboard() {
-        VBox leaderboardBox = new VBox(10);
-        leaderboardBox.setAlignment(Pos.CENTER);
-
-        Label leaderboardLabel = new Label("Leaderboard (Top 3):");
-        leaderboardBox.getChildren().add(leaderboardLabel);
-
-        List<String> topPlayers = leaderboard.getTopPlayers();
-        for (String player : topPlayers) {
-            Label playerLabel = new Label(player);
-            leaderboardBox.getChildren().add(playerLabel);
-        }
-
+        VBox leaderboardBox = createLeaderboardBox();
         gamePane.getChildren().add(leaderboardBox);
         StackPane.setAlignment(leaderboardBox, Pos.CENTER);
     }
 
-    private void clearLeaderboard() {
-        leaderboard.clearLeaderboard();
-        System.out.println("Leaderboard cleared.");
+    private VBox createLeaderboardBox() {
+        VBox leaderboardBox = new VBox(10);
+        leaderboardBox.setAlignment(Pos.CENTER);
+
+        Label leaderboardLabel = new Label("Leaderboard (Top " + TOP_PLAYERS_COUNT + "):");
+        leaderboardBox.getChildren().add(leaderboardLabel);
+
+        List<String> topPlayers = leaderboard.getTopPlayers(TOP_PLAYERS_COUNT);
+        topPlayers.forEach(player -> leaderboardBox.getChildren().add(createPlayerLabel(player)));
+
+        return leaderboardBox;
+    }
+
+
+
+    private Label createPlayerLabel(String player) {
+        return new Label(player);
     }
 
     public static void main(String[] args) {
-        // Initialize database and leaderboard table
-        new SQLiteDatabase().initializeDatabase();
+        new LeaderboardSQLiteDatabase().initializeDatabase();
         launch(args);
     }
 }

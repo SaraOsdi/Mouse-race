@@ -6,4 +6,6 @@ module com.example.mouseracegame {
 
     opens com.example.mouseracegame to javafx.fxml;
     exports com.example.mouseracegame;
+    exports com.example.element;
+    opens com.example.element to javafx.fxml;
 }
