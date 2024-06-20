@@ -6,6 +6,8 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Polygon;
 import javafx.util.Duration;
 
+import static com.example.element.ElementSettings.*;
+
 public class ChangeElement extends GameElement {
 
     private boolean isCollectState;
@@ -17,8 +19,8 @@ public class ChangeElement extends GameElement {
         Polygon triangle = new Polygon();
         triangle.getPoints().addAll(
                 0.0, 0.0,  // Vertex 1
-                30.0, 0.0, // Vertex 2
-                15.0, 30.0 // Vertex 3
+                TRIANGLE_VERTEX_A, 0.0, // Vertex 2
+                TRIANGLE_VERTEX_B, TRIANGLE_VERTEX_A // Vertex 3
         );
         triangle.setFill(Color.GREEN);
 
@@ -27,12 +29,12 @@ public class ChangeElement extends GameElement {
         this.isCollectState = true;
 
         // Initialize the change state timeline
-        changeStateTimeline = new Timeline(new KeyFrame(Duration.seconds(2), e -> changeState()));
+        changeStateTimeline = new Timeline(new KeyFrame(Duration.seconds(DURATION_SECONDS), e -> changeState()));
         changeStateTimeline.setCycleCount(Timeline.INDEFINITE);
         changeStateTimeline.play();
 
         // Initialize the rotation timeline
-        rotationTimeline = new Timeline(new KeyFrame(Duration.millis(50), e -> rotate()));
+        rotationTimeline = new Timeline(new KeyFrame(Duration.millis(DURATION_MILLIS), e -> rotate()));
         rotationTimeline.setCycleCount(Timeline.INDEFINITE);
         rotationTimeline.play();
     }
