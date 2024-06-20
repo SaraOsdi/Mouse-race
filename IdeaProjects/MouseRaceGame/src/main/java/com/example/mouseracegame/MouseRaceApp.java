@@ -106,7 +106,7 @@ public class MouseRaceApp extends Application {
                 gamePane.getChildren().add(element.getShape());
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println("Error creating elements: " + e);
         }
     }
 
@@ -122,13 +122,14 @@ public class MouseRaceApp extends Application {
     }
 
     private void handleElementClick(GameElement element) {
-        if (element.isCollectible()) {
-            gamePane.getChildren().remove(element.getShape());
-            elements.remove(element);
-            checkVictoryCondition();
-        } else {
-            gameOver();
-        }
+         switch(element.onClick()){
+             case REMOVE -> {
+                 gamePane.getChildren().remove(element.getShape());
+                 elements.remove(element);
+                 checkVictoryCondition();}
+             case AVOID -> gameOver();
+         }
+
     }
 
     private void setupGameLoop() {

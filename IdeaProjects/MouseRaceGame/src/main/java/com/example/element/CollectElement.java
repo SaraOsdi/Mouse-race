@@ -56,4 +56,9 @@ public class CollectElement extends GameElement {
         movementTimeline.stop();
         positionUpdater.stop();
     }
+
+    @Override
+    public ElementStatus onClick() {
+        return ElementStatus.REMOVE;
+    }
 }

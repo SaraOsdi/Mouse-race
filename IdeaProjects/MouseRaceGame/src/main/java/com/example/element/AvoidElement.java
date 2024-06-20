@@ -56,4 +56,9 @@ public class AvoidElement extends GameElement {
         movementTimeline.stop();
         positionUpdater.stop();
     }
+
+    @Override
+    public ElementStatus onClick() {
+        return ElementStatus.AVOID;
+    }
 }

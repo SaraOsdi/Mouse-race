@@ -60,4 +60,12 @@ public class ChangeElement extends GameElement {
         changeStateTimeline.stop();
         rotationTimeline.stop();
     }
+
+    @Override
+    public ElementStatus onClick() {
+        if(isCollectible) {
+            return ElementStatus.REMOVE;
+        }
+        return ElementStatus.AVOID;
+    }
 }

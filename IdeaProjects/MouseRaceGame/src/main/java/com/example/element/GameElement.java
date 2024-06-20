@@ -16,4 +16,7 @@ public abstract class GameElement {
     }
 
     public abstract void stopMovement();
+
+    public abstract ElementStatus onClick();
 }
+
